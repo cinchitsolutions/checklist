@@ -1,6 +1,3 @@
-<!--
--- HTML Boostrap App with Tailwind for UI & local storage for data storage.
--->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,105 +5,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checklist App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         .completed {
             text-decoration: line-through;
-            color: #999;
-            /* Optional: change the color of completed tasks */
+            color: gray;
         }
     </style>
 </head>
 
-<body>
-    <div class="container mt-5">
-        <h1 class="text-center">Checklist</h1>
-        <div class="input-group mb-3">
-            <input type="text" id="itemInput" class="form-control" placeholder="Add new item">
-            <button id="addItem" class="btn btn-primary">Add</button>
-        </div>
-        <ul id="checklist" class="list-group mb-3"></ul>
-        <button id="deleteAll" class="btn btn-danger">Delete All Items</button>
+<body class="bg-gray-100 p-6">
+    <div class="container mx-auto">
+        <h1 class="text-2xl font-bold mb-4">Checklist App</h1>
+        <input type="text" id="newItem" class="border p-2 w-full mb-4" placeholder="Add a new checklist item..." />
+        <ul id="checklist" class="list-group"></ul>
+        <button id="deleteAll" class="bg-red-500 text-white rounded px-4 py-2 mt-4">Delete All</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const input = document.getElementById('itemInput');
-        const checklist = document.getElementById('checklist');
+        const checklistElement = document.getElementById('checklist');
+        const newItemInput = document.getElementById('newItem');
+        const deleteAllButton = document.getElementById('deleteAll');
 
-        // Load existing items from localStorage
+        // Load existing items on page load
+        loadChecklist();
+
         function loadChecklist() {
-            const items = JSON.parse(localStorage.getItem('checklist')) || [];
-            items.forEach(item => addToChecklist(item));
+            checklistElement.innerHTML = '';
+            const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+            checklist.forEach((item, index) => addToChecklist(item, index));
         }
 
-        // Function to add an item to the checklist
-        function addItem() {
-            const text = input.value.trim();
-            if (text) {
-                const item = { text: text, completed: false };
-                addToChecklist(item);
-                input.value = '';
-                saveChecklist();
-            }
-        }
-
-        // Event listener for adding item on Enter key press
-        input.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                addItem();
-            }
-        });
-
-        document.getElementById('addItem').addEventListener('click', addItem);
-
-        function addToChecklist(item) {
+        function addToChecklist(item, index) {
             const li = document.createElement('li');
-            li.className = "list-group-item d-flex justify-content-between align-items-center";
+            li.className = "flex items-center p-2 border-b";
+            li.dataset.index = index;
 
             const checkbox = document.createElement('input');
-            checkbox.className = 'form-check-input';
             checkbox.type = 'checkbox';
+            checkbox.className = 'form-check-input mr-2';
             checkbox.checked = item.completed;
-            checkbox.addEventListener('change', function () {
-                item.completed = this.checked;
+            checkbox.addEventListener('change', () => {
+                item.completed = checkbox.checked;
                 updateItemDisplay(li, item.completed);
                 saveChecklist();
             });
 
             const span = document.createElement('span');
+            span.className = item.completed ? 'completed item-text' : 'item-text';
             span.textContent = item.text;
-            if (item.completed) {
-                span.classList.add('completed');
-            }
+            span.addEventListener('click', () => toggleCheckbox(li));
 
-            // Edit button
-            const editButton = document.createElement('button');
-            editButton.textContent = 'Edit';
-            editButton.classList.add('btn', 'btn-warning', 'btn-sm', 'edit-btn');
-            editButton.addEventListener('click', function () {
-                const newText = prompt('Edit item:', item.text);
-                if (newText) {
-                    item.text = newText;
-                    span.textContent = newText;
-                    saveChecklist();
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.className = 'hidden edit-input border border-gray-300 rounded p-1 ml-2';
+            editInput.value = item.text;
+            editInput.addEventListener('blur', () => {
+                item.text = editInput.value;
+                span.textContent = item.text;
+                span.classList.remove('hidden');
+                editInput.classList.add('hidden');
+                saveChecklist();
+            });
+            editInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    editInput.blur();
                 }
             });
 
-            // Delete button
+            const editButton = document.createElement('button');
+            editButton.className = 'bg-yellow-500 text-white rounded px-2 py-1 text-sm ml-2';
+            editButton.textContent = 'Edit';
+            editButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                span.classList.add('hidden');
+                editInput.classList.remove('hidden');
+                editInput.focus();
+            });
+
             const deleteButton = document.createElement('button');
+            deleteButton.className = 'bg-red-500 text-white rounded px-2 py-1 text-sm ml-2';
             deleteButton.textContent = 'Delete';
-            deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
-            deleteButton.addEventListener('click', function () {
-                checklist.removeChild(li);
-                saveChecklist(); // Update localStorage after deletion
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+                checklist.splice(index, 1);
+                localStorage.setItem('checklist', JSON.stringify(checklist));
+                loadChecklist();
             });
 
             li.appendChild(checkbox);
             li.appendChild(span);
+            li.appendChild(editInput);
             li.appendChild(editButton);
             li.appendChild(deleteButton);
-            checklist.appendChild(li);
+
+            // New container for buttons
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'ml-auto flex-shrink-0';
+            buttonContainer.appendChild(editButton);
+            buttonContainer.appendChild(deleteButton);
+            li.appendChild(buttonContainer);
+
+            checklistElement.appendChild(li);
+        }
+
+        function toggleCheckbox(li) {
+            const checkbox = li.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked; // Toggle checkbox status
+            const index = li.dataset.index;
+            const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+            checklist[index].completed = checkbox.checked;
+            updateItemDisplay(li, checklist[index].completed);
+            localStorage.setItem('checklist', JSON.stringify(checklist));
         }
 
         function updateItemDisplay(li, completed) {
@@ -119,27 +130,27 @@
         }
 
         function saveChecklist() {
-            const items = [];
-            document.querySelectorAll('#checklist li').forEach(li => {
-                const checkbox = li.querySelector('input[type="checkbox"]');
-                items.push({
-                    text: li.querySelector('span').textContent,
-                    completed: checkbox.checked
-                });
-            });
-            localStorage.setItem('checklist', JSON.stringify(items));
+            const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+            localStorage.setItem('checklist', JSON.stringify(checklist));
         }
 
-        // Add event listener for Delete All button
-        document.getElementById('deleteAll').addEventListener('click', function () {
-            if (confirm('Are you sure you want to delete all items?')) {
-                checklist.innerHTML = ''; // Clear all items from the UI
-                localStorage.removeItem('checklist'); // Clear localStorage
+        newItemInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && newItemInput.value.trim()) {
+                const newItem = { text: newItemInput.value.trim(), completed: false };
+                const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+                checklist.push(newItem);
+                localStorage.setItem('checklist', JSON.stringify(checklist));
+                addToChecklist(newItem, checklist.length - 1);
+                newItemInput.value = '';
             }
         });
 
-        // Load existing items on page load
-        loadChecklist();
+        deleteAllButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all items?')) {
+                localStorage.removeItem('checklist'); // Clear local storage
+                loadChecklist(); // Refresh the list display
+            }
+        });
     </script>
 </body>
 
