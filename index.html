@@ -1,5 +1,9 @@
+<!--
+-- HTML Boostrap App with Tailwind for UI & local storage for data storage.
+-->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +12,12 @@
     <style>
         .completed {
             text-decoration: line-through;
-            color: #999; /* Optional: change the color of completed tasks */
+            color: #999;
+            /* Optional: change the color of completed tasks */
         }
     </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Checklist</h1>
@@ -46,7 +52,7 @@
         }
 
         // Event listener for adding item on Enter key press
-        input.addEventListener('keydown', function(event) {
+        input.addEventListener('keydown', function (event) {
             if (event.key === 'Enter') {
                 addItem();
             }
@@ -62,7 +68,7 @@
             checkbox.className = 'form-check-input';
             checkbox.type = 'checkbox';
             checkbox.checked = item.completed;
-            checkbox.addEventListener('change', function() {
+            checkbox.addEventListener('change', function () {
                 item.completed = this.checked;
                 updateItemDisplay(li, item.completed);
                 saveChecklist();
@@ -78,7 +84,7 @@
             const editButton = document.createElement('button');
             editButton.textContent = 'Edit';
             editButton.classList.add('btn', 'btn-warning', 'btn-sm', 'edit-btn');
-            editButton.addEventListener('click', function() {
+            editButton.addEventListener('click', function () {
                 const newText = prompt('Edit item:', item.text);
                 if (newText) {
                     item.text = newText;
@@ -91,7 +97,7 @@
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Delete';
             deleteButton.classList.add('btn', 'btn-danger', 'btn-sm', 'delete-btn');
-            deleteButton.addEventListener('click', function() {
+            deleteButton.addEventListener('click', function () {
                 checklist.removeChild(li);
                 saveChecklist(); // Update localStorage after deletion
             });
@@ -125,7 +131,7 @@
         }
 
         // Add event listener for Delete All button
-        document.getElementById('deleteAll').addEventListener('click', function() {
+        document.getElementById('deleteAll').addEventListener('click', function () {
             if (confirm('Are you sure you want to delete all items?')) {
                 checklist.innerHTML = ''; // Clear all items from the UI
                 localStorage.removeItem('checklist'); // Clear localStorage
@@ -136,4 +142,5 @@
         loadChecklist();
     </script>
 </body>
+
 </html>
