@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +12,6 @@
         }
     </style>
 </head>
-
 <body class="bg-gray-100 p-6">
     <div class="container mx-auto">
         <h1 class="text-2xl font-bold mb-4">Checklist App</h1>
@@ -33,6 +31,8 @@
         function loadChecklist() {
             checklistElement.innerHTML = '';
             const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+            // Sort checklist to show unchecked items first
+            checklist.sort((a, b) => a.completed - b.completed);
             checklist.forEach((item, index) => addToChecklist(item, index));
         }
 
@@ -48,7 +48,7 @@
             checkbox.addEventListener('change', () => {
                 item.completed = checkbox.checked;
                 updateItemDisplay(li, item.completed);
-                saveChecklist();
+                saveChecklist(); // Save changes to local storage
             });
 
             const span = document.createElement('span');
@@ -61,11 +61,16 @@
             editInput.className = 'hidden edit-input border border-gray-300 rounded p-1 ml-2';
             editInput.value = item.text;
             editInput.addEventListener('blur', () => {
-                item.text = editInput.value;
-                span.textContent = item.text;
-                span.classList.remove('hidden');
-                editInput.classList.add('hidden');
-                saveChecklist();
+                if (editInput.value.trim() !== "") {
+                    item.text = editInput.value;
+                    span.textContent = item.text;
+                    span.classList.remove('hidden');
+                    editInput.classList.add('hidden');
+                    saveChecklist(); // Save changes to local storage
+                } else {
+                    alert("Item text cannot be empty.");
+                    editInput.value = item.text; // Revert to original text
+                }
             });
             editInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -115,9 +120,9 @@
             checkbox.checked = !checkbox.checked; // Toggle checkbox status
             const index = li.dataset.index;
             const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
-            checklist[index].completed = checkbox.checked;
+            checklist[index].completed = checkbox.checked; // Update completed status
             updateItemDisplay(li, checklist[index].completed);
-            localStorage.setItem('checklist', JSON.stringify(checklist));
+            localStorage.setItem('checklist', JSON.stringify(checklist)); // Save to local storage
         }
 
         function updateItemDisplay(li, completed) {
@@ -130,7 +135,10 @@
         }
 
         function saveChecklist() {
-            const checklist = JSON.parse(localStorage.getItem('checklist')) || [];
+            const checklist = Array.from(checklistElement.children).map(li => ({
+                text: li.querySelector('span').textContent,
+                completed: li.querySelector('input[type="checkbox"]').checked,
+            }));
             localStorage.setItem('checklist', JSON.stringify(checklist));
         }
 
@@ -153,5 +161,4 @@
         });
     </script>
 </body>
-
 </html>
